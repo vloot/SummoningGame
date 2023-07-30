@@ -1,0 +1,4 @@
+1. Create a tilemap
+2. Clicking on tiles
+3. Add pathfinding
+4. Add movement
