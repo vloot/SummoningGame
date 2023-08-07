@@ -45,8 +45,14 @@ TagManager:
   - name: Background
     uniqueID: 1381358747
     locked: 0
+  - name: Level
+    uniqueID: 1941039685
+    locked: 0
   - name: Highhlight
     uniqueID: 1957691997
+    locked: 0
+  - name: Character
+    uniqueID: 3826452101
     locked: 0
   - name: UI
     uniqueID: 3038394707

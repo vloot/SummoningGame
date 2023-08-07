@@ -57,7 +57,7 @@ public class ObjectPool<T> where T : IPoolObject<T>
         {
             var poolObject = GameObject.Instantiate(_prefab, Vector3.zero, Quaternion.identity, _parent);
 
-            var objectComponent = poolObject.GetComponent<T>();
+            var objectComponent = poolObject.GetComponent<T>(); // todo check for null?
             objectComponent.Disable();
             _objectQueue.Enqueue(objectComponent);
         }
