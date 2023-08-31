@@ -13,16 +13,15 @@ public class CharacterTurnController : MonoBehaviour
     [Header("UI")]
     [SerializeField] private CharacterTurnUI turnUI;
 
+    [Header("Tile highlighting")] // TODO this shouldn't be here
+    [SerializeField] private GameObject highlightPrefab;
+    [SerializeField] private Transform highlightPoolParent;
+    private RangeHighlighter _rangeHighlighter;
+
     [Header("Input")]
     [SerializeField] private InputController inputController;
 
-
-
-    // current turn
-    private bool _isCharacterSelected;
-    private BaseCharacter _selectedCharacter;
-    private CharacterAction _selectedCharacterAction;
-
+    private CharacterTurn _characterTurn;
     private Dictionary<CharacterAction, BaseCommand> _commandsDict;
 
 
@@ -37,18 +36,23 @@ public class CharacterTurnController : MonoBehaviour
             () => ActionSelected(CharacterAction.UseSpell)
         );
 
+        // TODO should this be here?
+        _rangeHighlighter = new RangeHighlighter(levelTiles, highlightPrefab, highlightPoolParent);
+        var pathfinder = new Pathfinder(levelTiles);
+
         // initialize and set up commands
-        // TODO setup commands
-        var moveCommand = new MoveCommand(inputController, levelTiles);
-        var attackCommand = new AttackCommand();
+        var moveCommand = new MoveCommand(inputController, levelTiles, _rangeHighlighter, pathfinder);
+        var attackCommand = new AttackCommand(inputController, levelTiles, _rangeHighlighter, pathfinder);
         var spellCommand = new SpellCommand();
         var itemCommand = new ItemCommand();
 
-        _commandsDict = new Dictionary<CharacterAction, BaseCommand>();
-        _commandsDict[CharacterAction.Move] = moveCommand;
-        _commandsDict[CharacterAction.Attack] = attackCommand;
-        _commandsDict[CharacterAction.UseSpell] = spellCommand;
-        _commandsDict[CharacterAction.UseItem] = itemCommand;
+        _commandsDict = new Dictionary<CharacterAction, BaseCommand>
+        {
+            [CharacterAction.Move] = moveCommand,
+            [CharacterAction.Attack] = attackCommand,
+            [CharacterAction.UseSpell] = spellCommand,
+            [CharacterAction.UseItem] = itemCommand
+        };
 
         // Input controller needs tiles
         inputController.Setup(levelTiles);
@@ -57,66 +61,90 @@ public class CharacterTurnController : MonoBehaviour
 
     public void CharacterClicked(BaseCharacter character)
     {
-        if (!_isCharacterSelected)
+        if (!_characterTurn.IsCharacterSelected())
         {
-            // new character clicked
             SetupClickedCharacter(character);
-            ConsoleLogger.Log("Character selected in controller");
-        }
-
-        // cases when character is selected
-        if (character == _selectedCharacter)
-        {
-            // clicked on self
             return;
         }
-        else
-        {
-            // other character was clicked
-        }
+
+        // execute command if possible
+        TryExecuteCommand(ActionTarget.Character);
     }
 
     private void SetupClickedCharacter(BaseCharacter character)
     {
-        _selectedCharacter = character;
-        inputController.acceptInputs = true;
-        turnUI.DisplayUI(true, _selectedCharacter.transform.position);
+        // new character clicked
+        _characterTurn = new CharacterTurn(character);
+        turnUI.ShowUI(_characterTurn);
+        // inputController.acceptInputs = true;
+
+        ConsoleLogger.Log("Character selected in controller");
     }
 
     private void TileClicked(Vector3Int tilePos)
     {
-        if (_selectedCharacterAction == CharacterAction.Move)
+        TryExecuteCommand(ActionTarget.Tile);
+    }
+
+    private void TryExecuteCommand(ActionTarget actionTarget)
+    {
+        if (_characterTurn.characterAction == CharacterAction.None)
         {
-            _commandsDict[_selectedCharacterAction].ExecuteCommand(_selectedCharacter);
-            CancelTurn(); // TODO end turn?
+            return;
+        }
+
+        if (_commandsDict[_characterTurn.characterAction].CanExecute(actionTarget))
+        {
+            inputController.acceptInputs = false;
+
+            var wasExecuted = _commandsDict[_characterTurn.characterAction].ExecuteCommand(_characterTurn.character, () => CommandCompleted());
+
+            if (wasExecuted)
+            {
+                turnUI.ShowUI(false);
+            }
+            else
+            {
+                inputController.acceptInputs = true;
+            }
         }
     }
 
-    private void EndTurn()
+    private void CommandCompleted()
     {
+        _characterTurn.CompleteAction();
+        turnUI.ShowUI(_characterTurn);
+        inputController.acceptInputs = true;
 
+        if (_characterTurn.IsOver())
+        {
+            EndTurn();
+        }
     }
 
-    private void CancelTurn()
+    private void EndTurn(bool turnCompleted = true)
     {
-        turnUI.DisplayUI(false);
-        inputController.acceptInputs = false;
-        _selectedCharacter = null;
-        _selectedCharacterAction = CharacterAction.None;
+        turnUI.ShowUI(false);
+        _rangeHighlighter.RemoveHighlight();
+        // inputController.acceptInputs = false;
+        _characterTurn.EndTurn();
+
+        if (turnCompleted)
+        {
+            // TODO save that the turn was completed
+        }
+
+        ConsoleLogger.Log("Turn ended");
     }
 
     private void ActionSelected(CharacterAction action)
     {
-        _selectedCharacterAction = action;
+        _characterTurn.SelectAction(action);
+        _commandsDict[action].PrepareCommand(_characterTurn.character);
+
         ConsoleLogger.Log("Action selected: " + action);
-        _commandsDict[action].PrepareCommand(_selectedCharacter);
     }
 
     private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            CancelTurn(); // TODO looks questionable, fix or remove this
-        }
-    }
+    { }
 }

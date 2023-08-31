@@ -71,12 +71,12 @@ public class Pathfinder
         return new List<Tile>();
     }
 
-    public static int GetDistance(Tile tile1, Tile tile2)
+    private int GetDistance(Tile tile1, Tile tile2)
     {
         return Mathf.Abs(tile1.tilePosition.x - tile2.tilePosition.x) + Mathf.Abs(tile1.tilePosition.y - tile2.tilePosition.y);
     }
 
-    public List<Tile> GetNeighbours(Tile tile)
+    private List<Tile> GetNeighbours(Tile tile)
     {
         var offsets = new Vector3Int[] {
             // top left

@@ -1,12 +1,18 @@
 using UnityEngine;
+
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
 using System;
 using System.Diagnostics;
 using System.Reflection;
+#endif
 
 public class ConsoleLogger : MonoBehaviour
 {
+
+#if UNITY_EDITOR
+
     [Header("Global bool")]
     public bool enableLogging = true;
 
@@ -48,7 +54,11 @@ public class ConsoleLogger : MonoBehaviour
             UnityEngine.Debug.Log(string.Format("[{0}] {1}", callingType?.Name, msg));
         }
     }
+
+#endif
 }
+
+#if UNITY_EDITOR
 
 [System.Serializable]
 public struct ConsoleLoggerCaller
@@ -62,3 +72,5 @@ public struct ConsoleLoggerCaller
         enabledLogging = true;
     }
 }
+
+#endif

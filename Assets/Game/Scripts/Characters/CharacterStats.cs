@@ -3,7 +3,9 @@ public class CharacterStats
 {
     public short level;
     public short health;
-    public short moveRange;
+
+    public byte moveRange;
+    public byte attackRange;
 
     // Main stats
     public short strength;

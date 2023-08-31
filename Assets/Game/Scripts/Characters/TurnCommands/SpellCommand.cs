@@ -1,6 +1,6 @@
 public class SpellCommand : BaseCommand
 {
-    public override void ExecuteCommand(BaseCharacter character)
+    public override bool ExecuteCommand(BaseCharacter character, System.Action onComplete = null)
     {
         throw new System.NotImplementedException();
     }

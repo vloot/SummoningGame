@@ -4,38 +4,52 @@ using System.Collections.Generic;
 
 public class MoveCommand : BaseCommand
 {
-    private Pathfinder _pathfinder;
-    private LevelTiles _levelTiles;
 
-    private CharacterTurnController _turnController;
-    private InputController _inputController;
-
-    public MoveCommand(InputController inputController, LevelTiles levelTiles)
+    public MoveCommand(InputController inputController, LevelTiles levelTiles, RangeHighlighter rangeHighlighter, Pathfinder pathfinder)
     {
-        _pathfinder = new Pathfinder(levelTiles);
-        _inputController = inputController;
-        _levelTiles = levelTiles;
+        InitBaseParamaters(inputController, levelTiles, rangeHighlighter, pathfinder);
+        _actionTarget = ActionTarget.Tile;
     }
 
-    public override void ExecuteCommand(BaseCharacter character)
+    public override bool ExecuteCommand(BaseCharacter character, System.Action onComplete = null)
     {
         var path = _pathfinder.FindPath(_levelTiles.GetTileByWorldPosition(character.transform.position), _levelTiles.GetTile(_inputController.ClickPosition));
 
-        var pathList = new List<Vector3>();
-
-        foreach (var item in path)
+        if (path.Count > character.characterStats.moveRange || path.Count == 0)
         {
-            var pos = _levelTiles.CellToWorld(item.tilePosition);
-            pos.y += 0.25f;
-            pathList.Add(pos);
+            ConsoleLogger.Log("Out of movement range");
+            return false;
         }
 
-        character.gameObject.transform.DOPath(pathList.ToArray(), pathList.Count * 0.5f);
+        _rangeHighlighter.RemoveHighlight();
+
+        // update new tile position for the character
+        character.characterTile = path[path.Count - 1];
+
+        var pathArray = CreateWorldPath(path);
+        var tween = character.gameObject.transform.DOPath(pathArray, pathArray.Length * 0.5f); // TODO move this to character animator, remove hardcoded values
+        tween.onComplete += () => onComplete?.Invoke(); // FIXME not a good idea to have game logic run AFTER animation
+
+        return true;
     }
 
     public override void PrepareCommand(BaseCharacter character)
     {
         // highlight range
-        // character.characterStats.moveRange
+        _rangeHighlighter.Highlight(character.characterTile, character.characterStats.moveRange);
+    }
+
+    private Vector3[] CreateWorldPath(List<Tile> path)
+    {
+        var pathArray = new Vector3[path.Count];
+
+        for (int i = 0; i < pathArray.Length; i++)
+        {
+            var pos = _levelTiles.CellToWorld(path[i].tilePosition);
+            pos.y += 0.25f; // FIXME remove hardcoded offset
+            pathArray[i] = pos;
+        }
+
+        return pathArray;
     }
 }

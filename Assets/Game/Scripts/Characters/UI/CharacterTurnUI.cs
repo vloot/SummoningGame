@@ -21,14 +21,29 @@ public class CharacterTurnUI : MonoBehaviour
         spellButton.onClick.AddListener(spellEvent);
     }
 
-    public void DisplayUI(bool isEnabled)
+    public void ShowUI(CharacterTurn characterTurn)
+    {
+        ShowUI(!characterTurn.IsOver());
+        if (characterTurn.IsOver()) return;
+
+        SetUIToCharacterPosition(characterTurn.character);
+        UpdateUI(characterTurn);
+    }
+
+    public void ShowUI(bool isEnabled)
     {
         turnCanvas.enabled = isEnabled;
     }
 
-    public void DisplayUI(bool isEnabled, Vector3 pos)
+    public void UpdateUI(CharacterTurn characterTurn)
     {
-        DisplayUI(isEnabled);
-        parentRect.transform.position = pos; // TODO fix this
+        moveButton.interactable = !characterTurn.Moved;
+        attackButton.interactable = !characterTurn.Attacked;
+        spellButton.interactable = !characterTurn.CastedSpell;
+    }
+
+    private void SetUIToCharacterPosition(BaseCharacter character)
+    {
+        parentRect.transform.position = character.transform.position; // TODO fix this
     }
 }
