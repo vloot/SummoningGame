@@ -18,7 +18,7 @@ public class RangeHighlighter
         _spawnedObjects = new List<HightlightObject>();
     }
 
-    public void Highlight(Tile originTile, byte range)
+    public void Highlight(Tile originTile, byte range, BasePathfindingConfig config = null)
     {
         for (int x = -range; x <= range; x++)
         {
@@ -32,7 +32,7 @@ public class RangeHighlighter
                 }
 
                 var tile = _levelTiles.tilesDict[pos];
-                var dist = GetDistance(originTile, tile);
+                var dist = GetDistance(originTile, tile, config);
 
                 if (dist == 0 || dist > range)
                 {
@@ -55,9 +55,9 @@ public class RangeHighlighter
         _spawnedObjects.Clear();
     }
 
-    public int GetDistance(Tile tile1, Tile tile2)
+    public int GetDistance(Tile tile1, Tile tile2, BasePathfindingConfig config = null)
     {
-        var path = _pathfinder.FindPath(tile1, tile2);
+        var path = _pathfinder.FindPath(tile1, tile2, config);
         return path.Count;
     }
 }

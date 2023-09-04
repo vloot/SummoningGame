@@ -4,10 +4,12 @@ using System.Collections.Generic;
 public class Pathfinder
 {
     private LevelTiles _levelTiles;
+    private BasePathfindingConfig _pathfindingConfig;
 
     public Pathfinder(LevelTiles levelTiles)
     {
         _levelTiles = levelTiles;
+        _pathfindingConfig = new MovePathfindingConfig(_levelTiles);
     }
 
     public List<Tile> ReconstructPath(Tile startTile, Tile targetTile)
@@ -25,7 +27,7 @@ public class Pathfinder
         return path;
     }
 
-    public List<Tile> FindPath(Tile startTile, Tile targetTile)
+    public List<Tile> FindPath(Tile startTile, Tile targetTile, BasePathfindingConfig config = null)
     {
         var open = new Heap<Tile>(_levelTiles.tilesDict.Count);
         var closed = new HashSet<Tile>();
@@ -43,7 +45,7 @@ public class Pathfinder
                 return ReconstructPath(startTile, targetTile);
             }
 
-            foreach (var n in GetNeighbours(currentTile))
+            foreach (var n in GetNeighbours(currentTile, config))
             {
                 if (closed.Contains(n))
                 {
@@ -76,40 +78,20 @@ public class Pathfinder
         return Mathf.Abs(tile1.position.x - tile2.position.x) + Mathf.Abs(tile1.position.y - tile2.position.y);
     }
 
-    private List<Tile> GetNeighbours(Tile tile)
+    private List<Tile> GetNeighbours(Tile tile, BasePathfindingConfig config)
     {
         var offsets = new Vector3Int[] {
-            // top left
-            // new Vector3Int(1, 1, 0),
-
-            // top
-            new Vector3Int(1, 0, 0),
-
-            // top right
-            // new Vector3Int(1, -1, 0),
-            
-            // left
-            new Vector3Int(0, 1, 0),
-
-            // right
-            new Vector3Int(0, -1, 0),
-
-            // bottom left
-            // new Vector3Int(-1, 1, 0),
-
-            // bottom
-            new Vector3Int(-1, 0, 0),
-
-            // bottom right
-            // new Vector3Int(-1, -1, 0),
+            TileNeighbors.Top, TileNeighbors.Right, TileNeighbors.Bottom, TileNeighbors.Left
         };
 
         var neighbours = new List<Tile>();
 
+        config ??= _pathfindingConfig;
+
         foreach (var offset in offsets)
         {
             var position = tile.position + offset;
-            if (_levelTiles.tilesDict.ContainsKey(position) && !_levelTiles.tilesDict[position].occupied)
+            if (_levelTiles.tilesDict.ContainsKey(position) && config.IsTileAvailable(position))
             {
                 neighbours.Add(_levelTiles.tilesDict[position]);
             }
