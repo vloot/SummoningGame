@@ -73,7 +73,7 @@ public class Pathfinder
 
     private int GetDistance(Tile tile1, Tile tile2)
     {
-        return Mathf.Abs(tile1.tilePosition.x - tile2.tilePosition.x) + Mathf.Abs(tile1.tilePosition.y - tile2.tilePosition.y);
+        return Mathf.Abs(tile1.position.x - tile2.position.x) + Mathf.Abs(tile1.position.y - tile2.position.y);
     }
 
     private List<Tile> GetNeighbours(Tile tile)
@@ -108,11 +108,10 @@ public class Pathfinder
 
         foreach (var offset in offsets)
         {
-            var pos = tile.tilePosition + offset;
-            if (_levelTiles.tilesDict.ContainsKey(pos))
+            var position = tile.position + offset;
+            if (_levelTiles.tilesDict.ContainsKey(position) && !_levelTiles.tilesDict[position].occupied)
             {
-                // TODO check if tile is empty
-                neighbours.Add(_levelTiles.tilesDict[pos]);
+                neighbours.Add(_levelTiles.tilesDict[position]);
             }
         }
 

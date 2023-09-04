@@ -61,8 +61,9 @@ public class CharacterTurnController : MonoBehaviour
 
     public void CharacterClicked(BaseCharacter character)
     {
-        if (!_characterTurn.IsCharacterSelected())
+        if (!_characterTurn.IsCharacterSelected() && character.CanMove())
         {
+            // new turn
             SetupClickedCharacter(character);
             return;
         }
@@ -122,19 +123,13 @@ public class CharacterTurnController : MonoBehaviour
         }
     }
 
-    private void EndTurn(bool turnCompleted = true)
+    private void EndTurn()
     {
+        ConsoleLogger.Log("Turn ended");
         turnUI.ShowUI(false);
         _rangeHighlighter.RemoveHighlight();
         // inputController.acceptInputs = false;
         _characterTurn.EndTurn();
-
-        if (turnCompleted)
-        {
-            // TODO save that the turn was completed
-        }
-
-        ConsoleLogger.Log("Turn ended");
     }
 
     private void ActionSelected(CharacterAction action)
@@ -144,7 +139,4 @@ public class CharacterTurnController : MonoBehaviour
 
         ConsoleLogger.Log("Action selected: " + action);
     }
-
-    private void Update()
-    { }
 }

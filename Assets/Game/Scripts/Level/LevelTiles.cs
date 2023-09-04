@@ -12,52 +12,47 @@ public class LevelTiles : MonoBehaviour
     {
         tilesDict = new Dictionary<Vector3Int, Tile>();
 
-        // Get all tiles and store them in list as Tile objects
+        // Get all tiles and store them in list as custom Tile objects
         foreach (var position in tilemap.cellBounds.allPositionsWithin)
         {
             var tile = tilemap.GetTile(position);
             if (tile != null)
             {
-                var customTile = new Tile(position, tilemap.GetTile(position));
+                var customTile = new Tile(position, CellToWorld(position), tile);
                 tilesDict[position] = customTile;
             }
         }
     }
 
-    private void Start()
+    public bool HasTile(Vector3Int tilePosition)
     {
-
+        return tilesDict.ContainsKey(tilePosition);
     }
 
-    public bool HasTile(Vector3Int tilePos)
+    public Tile GetTile(Vector3Int tilePositions)
     {
-        return tilesDict.ContainsKey(tilePos);
-    }
-
-    public Tile GetTile(Vector3Int tilePos)
-    {
-        if (tilesDict.ContainsKey(tilePos))
+        if (tilesDict.ContainsKey(tilePositions))
         {
-            return tilesDict[tilePos];
+            return tilesDict[tilePositions];
         }
 
         return null;
     }
 
-    public Tile GetTileByWorldPosition(Vector3 tilePosWorld)
+    public Tile GetTileByWorldPosition(Vector3 tileWorldPosition)
     {
-        tilePosWorld.z = 0;
-        var tilePos = tilemap.WorldToCell(tilePosWorld);
+        tileWorldPosition.z = 0;
+        var tilePos = tilemap.WorldToCell(tileWorldPosition);
         return GetTile(tilePos);
     }
 
-    public Vector3Int WorldToCell(Vector3 worldPos)
+    public Vector3Int WorldToCell(Vector3 worldPosition)
     {
-        return tilemap.WorldToCell(worldPos);
+        return tilemap.WorldToCell(worldPosition);
     }
 
-    public Vector3 CellToWorld(Vector3Int pos)
+    public Vector3 CellToWorld(Vector3Int position)
     {
-        return tilemap.CellToWorld(pos);
+        return tilemap.CellToWorld(position);
     }
 }

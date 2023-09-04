@@ -9,7 +9,7 @@ public class InputController : MonoBehaviour
 
     // cached clicks
     public Tile Tile { get; private set; }
-    public BaseCharacter Character { get; private set; }
+    public BaseCharacter ClickedCharacter { get; private set; }
     public Vector3Int ClickPosition { get; private set; }
 
     // character events
@@ -58,9 +58,9 @@ public class InputController : MonoBehaviour
 
         if (clickedTile != null)
         {
-            ConsoleLogger.Log("Tile clicked at: " + clickedTile.tilePosition);
-            ClickPosition = clickedTile.tilePosition;
-            OnTileClicked?.Invoke(clickedTile.tilePosition);
+            ConsoleLogger.Log("Tile clicked at: " + clickedTile.position);
+            ClickPosition = clickedTile.position;
+            OnTileClicked?.Invoke(clickedTile.position);
         }
     }
 
@@ -70,12 +70,12 @@ public class InputController : MonoBehaviour
 
         if (hit.collider != null && hit.collider.gameObject.layer == CHARACTER_LAYER)
         {
-            Character = hit.collider.gameObject.GetComponent<BaseCharacter>();
+            ClickedCharacter = hit.collider.gameObject.GetComponent<BaseCharacter>();
 
-            if (Character != null)
+            if (ClickedCharacter != null)
             {
                 ConsoleLogger.Log("Character hit: " + hit.collider.gameObject.name);
-                OnCharacterClicked?.Invoke(Character);
+                OnCharacterClicked?.Invoke(ClickedCharacter);
             }
         }
     }

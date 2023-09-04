@@ -1,9 +1,6 @@
 [System.Serializable]
 public class CharacterStats
 {
-    public short level;
-    public short health;
-
     public byte moveRange;
     public byte attackRange;
 

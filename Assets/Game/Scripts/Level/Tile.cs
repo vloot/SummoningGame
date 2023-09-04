@@ -4,8 +4,11 @@ using UnityEngine.Tilemaps;
 [System.Serializable]
 public class Tile : IHeapItem<Tile>
 {
-    public Vector3Int tilePosition;
-    public TileBase tileReference;
+    public Vector3Int position;
+    public Vector3 worldPosition;
+    public TileBase tileBase;
+
+    public bool occupied;
 
     // pathfinding
     public int gCost;
@@ -17,10 +20,12 @@ public class Tile : IHeapItem<Tile>
 
     public Tile parentTile;
 
-    public Tile(Vector3Int pos, TileBase tileRef)
+    public Tile(Vector3Int position, Vector3 worldPosition, TileBase tileRef)
     {
-        tilePosition = pos;
-        tileReference = tileRef;
+        this.position = position;
+        this.worldPosition = worldPosition;
+
+        tileBase = tileRef;
     }
 
     public void ClearTile()

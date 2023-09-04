@@ -24,6 +24,7 @@ public struct CharacterTurn
 
     public void EndTurn()
     {
+        character.EndTurn();
         _isTurnOver = true;
     }
 

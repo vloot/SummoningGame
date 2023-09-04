@@ -30,7 +30,6 @@ public class ConsoleLogger : MonoBehaviour
         else
         {
             Instance = this;
-            loggerObjects = new List<ConsoleLoggerCaller>();
         }
     }
 

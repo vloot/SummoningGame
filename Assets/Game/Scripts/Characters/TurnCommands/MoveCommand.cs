@@ -24,7 +24,9 @@ public class MoveCommand : BaseCommand
         _rangeHighlighter.RemoveHighlight();
 
         // update new tile position for the character
-        character.characterTile = path[path.Count - 1];
+        character.tile.occupied = false;
+        character.tile = path[path.Count - 1];
+        character.tile.occupied = true;
 
         var pathArray = CreateWorldPath(path);
         var tween = character.gameObject.transform.DOPath(pathArray, pathArray.Length * 0.5f); // TODO move this to character animator, remove hardcoded values
@@ -36,7 +38,8 @@ public class MoveCommand : BaseCommand
     public override void PrepareCommand(BaseCharacter character)
     {
         // highlight range
-        _rangeHighlighter.Highlight(character.characterTile, character.characterStats.moveRange);
+        _rangeHighlighter.RemoveHighlight();
+        _rangeHighlighter.Highlight(character.tile, character.characterStats.moveRange);
     }
 
     private Vector3[] CreateWorldPath(List<Tile> path)
@@ -45,7 +48,7 @@ public class MoveCommand : BaseCommand
 
         for (int i = 0; i < pathArray.Length; i++)
         {
-            var pos = _levelTiles.CellToWorld(path[i].tilePosition);
+            var pos = _levelTiles.CellToWorld(path[i].position);
             pos.y += 0.25f; // FIXME remove hardcoded offset
             pathArray[i] = pos;
         }

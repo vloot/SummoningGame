@@ -3,23 +3,45 @@ using UnityEngine;
 public class BaseCharacter : MonoBehaviour
 {
     public CharacterStats characterStats;
-    public GameObject characterVisual;
+    public CharacterVitals characterVitals;
 
-    [SerializeField] private CharacterTurnController controller;
+    // Character should track its position on grid
+    public Tile tile;
 
-    // TODO character should track its position on grid (PROPERLY)
-    public Tile characterTile;
+    // Teams
+    public Team team;
+
+    // character events
+    public delegate void OnTurnEnded(BaseCharacter character);
+    public OnTurnEnded OnCharacterTurnEnded;
+
+    public void CreateCharacter(Tile tile, Team team)
+    {
+        this.tile = tile;
+        this.team = team;
+
+        tile.occupied = true;
+
+        // FIXME this is wrong
+        var pos = tile.worldPosition;
+        pos.y += 0.25f; // FIXME remove hardcoded offset
+        transform.position = pos;
+    }
 
     private void Start()
     {
-        // FIXME remove this bit
+        // FIXME redo this PROPERLY
         var lt = FindObjectOfType<LevelTiles>();
-        characterTile = lt.GetTileByWorldPosition(transform.position);
+        tile = lt.GetTileByWorldPosition(transform.position);
     }
 
-    private void OnMouseDown()
+    public bool CanMove()
     {
-        // controller.CharacterClicked(this);
-        // ConsoleLogger.Log("Character clicked");
+        return team.CanMove(this);
+    }
+
+    public void EndTurn()
+    {
+        OnCharacterTurnEnded?.Invoke(this);
     }
 }

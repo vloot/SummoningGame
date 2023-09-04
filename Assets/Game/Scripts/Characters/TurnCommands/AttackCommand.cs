@@ -9,13 +9,14 @@ public class AttackCommand : BaseCommand
 
     public override bool ExecuteCommand(BaseCharacter character, System.Action onComplete = null)
     {
-        if (_inputController.Character == character)
+        if (_inputController.ClickedCharacter == character || _inputController.ClickedCharacter.team.Side == character.team.Side)
         {
-            // clicked on self
+            // clicked on self, or teammate
+            ConsoleLogger.Log("clicked on self, or teammate");
             return false;
         }
 
-        var pathLength = _pathfinder.FindPath(character.characterTile, _inputController.Character.characterTile).Count;
+        var pathLength = _pathfinder.FindPath(character.tile, _inputController.ClickedCharacter.tile).Count;
 
         if (pathLength == 0 || pathLength > character.characterStats.attackRange)
         {
@@ -24,8 +25,8 @@ public class AttackCommand : BaseCommand
 
         _rangeHighlighter.RemoveHighlight();
 
-        ConsoleLogger.Log("Attacking " + _inputController.Character.gameObject.name);
-        _inputController.Character.characterStats.health -= character.characterStats.strength;
+        ConsoleLogger.Log("Attacking " + _inputController.ClickedCharacter.gameObject.name);
+        _inputController.ClickedCharacter.characterVitals.health -= character.characterStats.strength;
 
         onComplete?.Invoke();
 
@@ -34,6 +35,7 @@ public class AttackCommand : BaseCommand
 
     public override void PrepareCommand(BaseCharacter character)
     {
-        _rangeHighlighter.Highlight(character.characterTile, character.characterStats.attackRange);
+        _rangeHighlighter.RemoveHighlight();
+        _rangeHighlighter.Highlight(character.tile, character.characterStats.attackRange);
     }
 }

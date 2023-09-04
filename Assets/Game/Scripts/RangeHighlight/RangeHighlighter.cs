@@ -24,9 +24,9 @@ public class RangeHighlighter
         {
             for (int y = -range; y <= range; y++)
             {
-                var pos = new Vector3Int(x + originTile.tilePosition.x, y + originTile.tilePosition.y, 0);
+                var pos = new Vector3Int(x + originTile.position.x, y + originTile.position.y, 0);
 
-                if (!_levelTiles.HasTile(pos) || originTile.tilePosition == pos)
+                if (!_levelTiles.HasTile(pos) || originTile.position == pos)
                 {
                     continue;
                 }
