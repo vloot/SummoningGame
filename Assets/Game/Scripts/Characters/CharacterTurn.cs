@@ -24,14 +24,19 @@ public struct CharacterTurn
 
     public void EndTurn()
     {
-        character.EndTurn();
         _isTurnOver = true;
+        character.EndTurn();
     }
 
     public bool IsOver()
     {
-        _isTurnOver = Attacked || CastedSpell;
-        _isTurnOver = Moved; // TODO this line is for testing, remove later!!
+        if (!_isTurnOver)
+        {
+            // check if turn is over
+            _isTurnOver = Attacked || CastedSpell;
+            _isTurnOver = Moved; // TODO this line is for testing, remove later!!
+        }
+
         return _isTurnOver;
     }
 

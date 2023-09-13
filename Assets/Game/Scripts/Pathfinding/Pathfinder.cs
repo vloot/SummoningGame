@@ -4,12 +4,14 @@ using System.Collections.Generic;
 public class Pathfinder
 {
     private LevelTiles _levelTiles;
-    private BasePathfindingConfig _pathfindingConfig;
+    private BasePathConfig _defaultConfig;
+    private ITileDistance _defaultDistance;
 
     public Pathfinder(LevelTiles levelTiles)
     {
         _levelTiles = levelTiles;
-        _pathfindingConfig = new MovePathfindingConfig(_levelTiles);
+        _defaultConfig = new BasePathConfig();
+        _defaultDistance = new ManhattanTileDistance();
     }
 
     public List<Tile> ReconstructPath(Tile startTile, Tile targetTile)
@@ -27,8 +29,11 @@ public class Pathfinder
         return path;
     }
 
-    public List<Tile> FindPath(Tile startTile, Tile targetTile, BasePathfindingConfig config = null)
+    public List<Tile> FindPath(Tile startTile, Tile targetTile, ITileDistance distance = null, BasePathConfig config = null)
     {
+        distance ??= _defaultDistance;
+        config ??= _defaultConfig;
+
         var open = new Heap<Tile>(_levelTiles.tilesDict.Count);
         var closed = new HashSet<Tile>();
 
@@ -52,11 +57,11 @@ public class Pathfinder
                     continue;
                 }
 
-                int newCost = currentTile.gCost + GetDistance(currentTile, n);
+                int newCost = currentTile.gCost + distance.GetDistance(currentTile, n);
                 if (newCost < n.gCost || !open.Contains(n))
                 {
                     n.gCost = newCost;
-                    n.hCost = GetDistance(n, targetTile);
+                    n.hCost = distance.GetDistance(n, targetTile);
                     n.parentTile = currentTile;
 
                     if (!open.Contains(n))
@@ -64,8 +69,6 @@ public class Pathfinder
                         open.Add(n);
                     }
                 }
-
-
             }
         }
 
@@ -73,12 +76,7 @@ public class Pathfinder
         return new List<Tile>();
     }
 
-    private int GetDistance(Tile tile1, Tile tile2)
-    {
-        return Mathf.Abs(tile1.position.x - tile2.position.x) + Mathf.Abs(tile1.position.y - tile2.position.y);
-    }
-
-    private List<Tile> GetNeighbours(Tile tile, BasePathfindingConfig config)
+    private List<Tile> GetNeighbours(Tile tile, BasePathConfig config)
     {
         var offsets = new Vector3Int[] {
             TileNeighbors.Top, TileNeighbors.Right, TileNeighbors.Bottom, TileNeighbors.Left
@@ -86,12 +84,10 @@ public class Pathfinder
 
         var neighbours = new List<Tile>();
 
-        config ??= _pathfindingConfig;
-
         foreach (var offset in offsets)
         {
             var position = tile.position + offset;
-            if (_levelTiles.tilesDict.ContainsKey(position) && config.IsTileAvailable(position))
+            if (_levelTiles.tilesDict.ContainsKey(position) && config.IsTileAvailable(_levelTiles.GetTile(position)))
             {
                 neighbours.Add(_levelTiles.tilesDict[position]);
             }

@@ -44,4 +44,14 @@ public class BaseCharacter : MonoBehaviour
     {
         OnCharacterTurnEnded?.Invoke(this);
     }
+
+    public byte CalculateDamage()
+    {
+        return characterStats.strength;
+    }
+
+    public void TakeDamage(byte amount)
+    {
+        characterVitals.health -= amount;
+    }
 }

@@ -10,6 +10,8 @@ public class RangeHighlighter
 
     private List<HightlightObject> _spawnedObjects;
 
+    private ITileDistance _distanceCalculator;
+
     public RangeHighlighter(LevelTiles levelTiles, GameObject highlight, Transform highlightParent)
     {
         _hightlightPool = new ObjectPool<HightlightObject>(24, highlight, highlightParent);
@@ -18,11 +20,11 @@ public class RangeHighlighter
         _spawnedObjects = new List<HightlightObject>();
     }
 
-    public void Highlight(Tile originTile, byte range, BasePathfindingConfig config = null)
+    public void Highlight(Tile originTile, byte maxRange, byte minRange = 0, bool walkableOnly = true)
     {
-        for (int x = -range; x <= range; x++)
+        for (int x = -maxRange; x <= maxRange; x++)
         {
-            for (int y = -range; y <= range; y++)
+            for (int y = -maxRange; y <= maxRange; y++)
             {
                 var pos = new Vector3Int(x + originTile.position.x, y + originTile.position.y, 0);
 
@@ -32,9 +34,9 @@ public class RangeHighlighter
                 }
 
                 var tile = _levelTiles.tilesDict[pos];
-                var dist = GetDistance(originTile, tile, config);
+                var dist = walkableOnly ? GetWalkableDistance(originTile, tile) : GetTileDistnace(originTile, tile);
 
-                if (dist == 0 || dist > range)
+                if (dist == 0 || dist > maxRange || dist < minRange)
                 {
                     continue;
                 }
@@ -55,9 +57,14 @@ public class RangeHighlighter
         _spawnedObjects.Clear();
     }
 
-    public int GetDistance(Tile tile1, Tile tile2, BasePathfindingConfig config = null)
+    public int GetWalkableDistance(Tile tile1, Tile tile2)
     {
-        var path = _pathfinder.FindPath(tile1, tile2, config);
+        var path = _pathfinder.FindPath(tile1, tile2);
         return path.Count;
+    }
+
+    private int GetTileDistnace(Tile tile1, Tile tile2)
+    {
+        return _distanceCalculator.GetDistance(tile1, tile2);
     }
 }

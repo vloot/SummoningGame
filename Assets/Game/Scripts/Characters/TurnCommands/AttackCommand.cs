@@ -1,12 +1,9 @@
 public class AttackCommand : BaseCommand
 {
-    private BasePathfindingConfig _pathfindingConfig;
-
     public AttackCommand(InputController inputController, LevelTiles levelTiles, RangeHighlighter rangeHighlighter, Pathfinder pathfinder)
     {
         InitBaseParamaters(inputController, levelTiles, rangeHighlighter, pathfinder);
         _actionTarget = ActionTarget.Character;
-        _pathfindingConfig = new AttackPathfindingConfig();
     }
 
     public override bool ExecuteCommand(BaseCharacter character, System.Action onComplete = null)
@@ -18,7 +15,7 @@ public class AttackCommand : BaseCommand
             return false;
         }
 
-        var pathLength = _pathfinder.FindPath(character.tile, _inputController.ClickedCharacter.tile, _pathfindingConfig).Count;
+        var pathLength = _pathfinder.FindPath(character.tile, _inputController.ClickedCharacter.tile).Count;
 
         if (pathLength == 0 || pathLength > character.characterStats.attackRange)
         {
@@ -28,7 +25,8 @@ public class AttackCommand : BaseCommand
         _rangeHighlighter.RemoveHighlight();
 
         ConsoleLogger.Log("Attacking " + _inputController.ClickedCharacter.gameObject.name);
-        _inputController.ClickedCharacter.characterVitals.health -= character.characterStats.strength;
+
+        _inputController.ClickedCharacter.TakeDamage(character.CalculateDamage());
 
         onComplete?.Invoke();
 
@@ -38,6 +36,6 @@ public class AttackCommand : BaseCommand
     public override void PrepareCommand(BaseCharacter character)
     {
         _rangeHighlighter.RemoveHighlight();
-        _rangeHighlighter.Highlight(character.tile, character.characterStats.attackRange, _pathfindingConfig);
+        _rangeHighlighter.Highlight(character.tile, character.characterStats.attackRange);
     }
 }

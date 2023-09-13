@@ -1,7 +1,5 @@
-using UnityEngine;
-
-public class CharacterVitals : MonoBehaviour
+[System.Serializable]
+public class CharacterVitals
 {
-    public short level;
     public short health;
 }

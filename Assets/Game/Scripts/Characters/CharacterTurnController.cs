@@ -31,9 +31,10 @@ public class CharacterTurnController : MonoBehaviour
         inputController.OnCharacterClicked += CharacterClicked;
 
         turnUI.SetupTurnUI(
-            () => ActionSelected(CharacterAction.Move),
-            () => ActionSelected(CharacterAction.Attack),
-            () => ActionSelected(CharacterAction.UseSpell)
+            () => CommandSelectedOnUI(CharacterAction.Move),
+            () => CommandSelectedOnUI(CharacterAction.Attack),
+            () => CommandSelectedOnUI(CharacterAction.UseSpell),
+            () => EndTurn()
         );
 
         // TODO should this be here?
@@ -58,28 +59,29 @@ public class CharacterTurnController : MonoBehaviour
         inputController.Setup(levelTiles);
     }
 
+    private void CommandSelectedOnUI(CharacterAction action)
+    {
+        _characterTurn.SelectAction(action);
+        _commandsDict[action].PrepareCommand(_characterTurn.character);
+
+        ConsoleLogger.Log("Action selected: " + action);
+    }
 
     public void CharacterClicked(BaseCharacter character)
     {
         if (!_characterTurn.IsCharacterSelected() && character.CanMove())
         {
-            // new turn
-            SetupClickedCharacter(character);
+            // new turn, new character clicked
+            _characterTurn = new CharacterTurn(character);
+            turnUI.ShowUI(_characterTurn);
+            // inputController.acceptInputs = true;
+
+            ConsoleLogger.Log("Character selected in controller");
             return;
         }
 
         // execute command if possible
         TryExecuteCommand(ActionTarget.Character);
-    }
-
-    private void SetupClickedCharacter(BaseCharacter character)
-    {
-        // new character clicked
-        _characterTurn = new CharacterTurn(character);
-        turnUI.ShowUI(_characterTurn);
-        // inputController.acceptInputs = true;
-
-        ConsoleLogger.Log("Character selected in controller");
     }
 
     private void TileClicked(Vector3Int tilePos)
@@ -89,7 +91,7 @@ public class CharacterTurnController : MonoBehaviour
 
     private void TryExecuteCommand(ActionTarget actionTarget)
     {
-        if (_characterTurn.characterAction == CharacterAction.None)
+        if (_characterTurn.characterAction == CharacterAction.None || _characterTurn.IsOver())
         {
             return;
         }
@@ -130,13 +132,5 @@ public class CharacterTurnController : MonoBehaviour
         _rangeHighlighter.RemoveHighlight();
         // inputController.acceptInputs = false;
         _characterTurn.EndTurn();
-    }
-
-    private void ActionSelected(CharacterAction action)
-    {
-        _characterTurn.SelectAction(action);
-        _commandsDict[action].PrepareCommand(_characterTurn.character);
-
-        ConsoleLogger.Log("Action selected: " + action);
     }
 }
