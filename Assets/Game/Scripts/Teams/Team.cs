@@ -3,8 +3,8 @@ using System.Linq;
 
 public class Team
 {
-    private List<BaseCharacter> characters;
-    TurnData<BaseCharacter> characterTurnData;
+    public List<BaseCharacter> Characters { get; private set; }
+    private TurnData<BaseCharacter> characterTurnData;
 
     public TeamSide Side { get; private set; }
     public bool ControlledByPlayer { get; private set; }
@@ -12,22 +12,23 @@ public class Team
     public bool isActiveTurn;
 
     // events
-    public delegate void OnTurnEndedDelegate(Team t);
-    public OnTurnEndedDelegate OnTurnEnded;
+    public delegate void TurnDelegate(Team t);
+    public TurnDelegate OnTurnStarted;
+    public TurnDelegate OnTurnEnded;
 
     public Team(TeamSide side, bool controlledByPlayer)
     {
         Side = side;
         ControlledByPlayer = controlledByPlayer;
 
-        characters = new List<BaseCharacter>();
+        Characters = new List<BaseCharacter>();
         // true if charactewr can move, false otherwise
         characterTurnData = new TurnData<BaseCharacter>();
     }
 
     public void AddCharacter(BaseCharacter character)
     {
-        characters.Add(character);
+        Characters.Add(character);
         characterTurnData.AddElement(character);
         character.OnCharacterTurnEnded += OnCharacterTurnEnded;
 
@@ -41,8 +42,8 @@ public class Team
 
     private void CheckAvailableMoves()
     {
-        var res = characters.Count(c => !characterTurnData.GetElementStatus(c));
-        if (res == characters.Count)
+        var res = Characters.Count(c => !characterTurnData.GetElementStatus(c));
+        if (res == Characters.Count)
         {
             EndTurn();
         }
@@ -56,6 +57,12 @@ public class Team
     public void Reset()
     {
         characterTurnData.Reset();
+    }
+
+    public void StartTurn()
+    {
+        isActiveTurn = true;
+        OnTurnStarted?.Invoke(this);
     }
 
     private void EndTurn()

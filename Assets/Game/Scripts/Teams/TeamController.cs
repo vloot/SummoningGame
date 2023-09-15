@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System;
 
 public class TeamController : MonoBehaviour
 {
@@ -64,7 +63,7 @@ public class TeamController : MonoBehaviour
     private void TeamTurn(Team team)
     {
         ConsoleLogger.Log("Team " + team.Side + " turn");
-        team.isActiveTurn = true;
+        team.StartTurn();
     }
 
     private void ResetTeams(Team t)
@@ -82,5 +81,20 @@ public class TeamController : MonoBehaviour
         ConsoleLogger.Log("OnTurnEnded");
         teamTurnData.SetElementStatus(t, false);
         ProcessMove();
+    }
+
+    public List<Team> GetTeams(TeamSide teamSide)
+    {
+        var requestedTeams = new List<Team>();
+
+        foreach (var item in teams)
+        {
+            if (item.Side == teamSide)
+            {
+                requestedTeams.Add(item);
+            }
+        }
+
+        return requestedTeams;
     }
 }

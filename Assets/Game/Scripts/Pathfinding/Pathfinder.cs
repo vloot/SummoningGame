@@ -34,7 +34,7 @@ public class Pathfinder
         distance ??= _defaultDistance;
         config ??= _defaultConfig;
 
-        var open = new Heap<Tile>(_levelTiles.tilesDict.Count);
+        var open = new Heap<Tile>(_levelTiles.GetTilesCount());
         var closed = new HashSet<Tile>();
 
         open.Add(startTile);
@@ -76,7 +76,7 @@ public class Pathfinder
         return new List<Tile>();
     }
 
-    private List<Tile> GetNeighbours(Tile tile, BasePathConfig config)
+    public List<Tile> GetNeighbours(Tile tile, BasePathConfig config)
     {
         var offsets = new Vector3Int[] {
             TileNeighbors.Top, TileNeighbors.Right, TileNeighbors.Bottom, TileNeighbors.Left
@@ -87,9 +87,9 @@ public class Pathfinder
         foreach (var offset in offsets)
         {
             var position = tile.position + offset;
-            if (_levelTiles.tilesDict.ContainsKey(position) && config.IsTileAvailable(_levelTiles.GetTile(position)))
+            if (_levelTiles.HasTile(position) && config.IsTileAvailable(_levelTiles.GetTile(position)))
             {
-                neighbours.Add(_levelTiles.tilesDict[position]);
+                neighbours.Add(_levelTiles.GetTile(position));
             }
         }
 

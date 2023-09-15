@@ -6,7 +6,7 @@ public class LevelTiles : MonoBehaviour
 {
     [SerializeField] private Tilemap tilemap;
 
-    public Dictionary<Vector3Int, Tile> tilesDict;
+    private Dictionary<Vector3Int, Tile> tilesDict;
 
     private void Awake()
     {
@@ -39,6 +39,11 @@ public class LevelTiles : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Get tile using world position. Returs null if a tile at that position does not exist
+    /// </summary>
+    /// <param name="tileWorldPosition"></param>
+    /// <returns></returns>
     public Tile GetTileByWorldPosition(Vector3 tileWorldPosition)
     {
         tileWorldPosition.z = 0;
@@ -54,5 +59,10 @@ public class LevelTiles : MonoBehaviour
     public Vector3 CellToWorld(Vector3Int position)
     {
         return tilemap.CellToWorld(position);
+    }
+
+    public int GetTilesCount()
+    {
+        return tilesDict.Count;
     }
 }

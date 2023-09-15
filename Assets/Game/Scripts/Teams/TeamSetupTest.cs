@@ -14,6 +14,8 @@ public class TeamSetupTest : MonoBehaviour
     public BaseCharacter character3;
     public Vector3Int character3StartPosition;
 
+    [Header("AI")]
+    [SerializeField] private AIController aiController;
 
     [Header("Team stuff")]
     public TeamController teamController;
@@ -41,5 +43,8 @@ public class TeamSetupTest : MonoBehaviour
         t2.AddCharacter(character2);
 
         teamController.ProcessMove();
+
+        // AI setup
+        aiController.InitAI(t2);
     }
 }

@@ -33,7 +33,7 @@ public class RangeHighlighter
                     continue;
                 }
 
-                var tile = _levelTiles.tilesDict[pos];
+                var tile = _levelTiles.GetTile(pos);
                 var dist = walkableOnly ? GetWalkableDistance(originTile, tile) : GetTileDistnace(originTile, tile);
 
                 if (dist == 0 || dist > maxRange || dist < minRange)

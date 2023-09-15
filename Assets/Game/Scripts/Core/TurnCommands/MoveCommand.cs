@@ -5,15 +5,18 @@ using System.Collections.Generic;
 public class MoveCommand : BaseCommand
 {
 
+    private BasePathConfig _pathConfig;
+
     public MoveCommand(InputController inputController, LevelTiles levelTiles, RangeHighlighter rangeHighlighter, Pathfinder pathfinder)
     {
         InitBaseParamaters(inputController, levelTiles, rangeHighlighter, pathfinder);
         _actionTarget = ActionTarget.Tile;
+        _pathConfig = new MovementPathConfig();
     }
 
     public override bool ExecuteCommand(BaseCharacter character, System.Action onComplete = null)
     {
-        var path = _pathfinder.FindPath(_levelTiles.GetTileByWorldPosition(character.transform.position), _levelTiles.GetTile(_inputController.ClickPosition));
+        var path = _pathfinder.FindPath(_levelTiles.GetTileByWorldPosition(character.transform.position), _inputController.ClickedTile, config: _pathConfig);
 
         if (path.Count > character.characterStats.moveRange || path.Count == 0)
         {

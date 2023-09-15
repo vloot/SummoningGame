@@ -1,21 +1,15 @@
 using UnityEngine;
-using DG.Tweening;
-using System.Collections;
 using System.Collections.Generic;
-using System;
 
 public class CharacterTurnController : MonoBehaviour
 {
     [Header("Components")]
-    [SerializeField] private Pathfinder pathfinder;
+    [SerializeField] private ComponentInit componentInit;
     [SerializeField] private LevelTiles levelTiles;
 
     [Header("UI")]
     [SerializeField] private CharacterTurnUI turnUI;
 
-    [Header("Tile highlighting")] // TODO this shouldn't be here
-    [SerializeField] private GameObject highlightPrefab;
-    [SerializeField] private Transform highlightPoolParent;
     private RangeHighlighter _rangeHighlighter;
 
     [Header("Input")]
@@ -27,6 +21,7 @@ public class CharacterTurnController : MonoBehaviour
 
     private void Awake()
     {
+        inputController.Setup(levelTiles);
         inputController.OnTileClicked += TileClicked;
         inputController.OnCharacterClicked += CharacterClicked;
 
@@ -36,27 +31,12 @@ public class CharacterTurnController : MonoBehaviour
             () => CommandSelectedOnUI(CharacterAction.UseSpell),
             () => EndTurn()
         );
+    }
 
-        // TODO should this be here?
-        _rangeHighlighter = new RangeHighlighter(levelTiles, highlightPrefab, highlightPoolParent);
-        var pathfinder = new Pathfinder(levelTiles);
-
-        // initialize and set up commands
-        var moveCommand = new MoveCommand(inputController, levelTiles, _rangeHighlighter, pathfinder);
-        var attackCommand = new AttackCommand(inputController, levelTiles, _rangeHighlighter, pathfinder);
-        var spellCommand = new SpellCommand();
-        var itemCommand = new ItemCommand();
-
-        _commandsDict = new Dictionary<CharacterAction, BaseCommand>
-        {
-            [CharacterAction.Move] = moveCommand,
-            [CharacterAction.Attack] = attackCommand,
-            [CharacterAction.UseSpell] = spellCommand,
-            [CharacterAction.UseItem] = itemCommand
-        };
-
-        // Input controller needs tiles
-        inputController.Setup(levelTiles);
+    private void Start()
+    {
+        _commandsDict = componentInit.CommandsDict;
+        _rangeHighlighter = componentInit.RangeHighlighter;
     }
 
     private void CommandSelectedOnUI(CharacterAction action)
@@ -69,7 +49,7 @@ public class CharacterTurnController : MonoBehaviour
 
     public void CharacterClicked(BaseCharacter character)
     {
-        if (!_characterTurn.IsCharacterSelected() && character.CanMove())
+        if (!_characterTurn.IsCharacterSelected() && character.team.ControlledByPlayer && character.CanMove())
         {
             // new turn, new character clicked
             _characterTurn = new CharacterTurn(character);
@@ -84,7 +64,7 @@ public class CharacterTurnController : MonoBehaviour
         TryExecuteCommand(ActionTarget.Character);
     }
 
-    private void TileClicked(Vector3Int tilePos)
+    private void TileClicked(Tile tile)
     {
         TryExecuteCommand(ActionTarget.Tile);
     }
@@ -98,17 +78,15 @@ public class CharacterTurnController : MonoBehaviour
 
         if (_commandsDict[_characterTurn.characterAction].CanExecute(actionTarget))
         {
-            inputController.acceptInputs = false;
+            inputController.acceptPlayerInputs = false;
+            turnUI.ShowUI(false);
 
             var wasExecuted = _commandsDict[_characterTurn.characterAction].ExecuteCommand(_characterTurn.character, () => CommandCompleted());
 
-            if (wasExecuted)
+            if (!wasExecuted)
             {
-                turnUI.ShowUI(false);
-            }
-            else
-            {
-                inputController.acceptInputs = true;
+                turnUI.ShowUI(true);
+                inputController.acceptPlayerInputs = true;
             }
         }
     }
@@ -117,7 +95,7 @@ public class CharacterTurnController : MonoBehaviour
     {
         _characterTurn.CompleteAction();
         turnUI.ShowUI(_characterTurn);
-        inputController.acceptInputs = true;
+        inputController.acceptPlayerInputs = true;
 
         if (_characterTurn.IsOver())
         {

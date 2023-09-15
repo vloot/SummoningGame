@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class InputController : MonoBehaviour
 {
-    public bool acceptInputs;
+    public bool acceptPlayerInputs;
 
     private Camera _mainCamera;
     private LevelTiles _levelTiles;
@@ -10,20 +10,17 @@ public class InputController : MonoBehaviour
     // cached clicks
     public Tile Tile { get; private set; }
     public BaseCharacter ClickedCharacter { get; private set; }
-    public Vector3Int ClickPosition { get; private set; }
+    public Tile ClickedTile { get; private set; }
 
     // character events
     public delegate void OnCharacterClickedDelegate(BaseCharacter character);
     public OnCharacterClickedDelegate OnCharacterClicked;
 
     // tile events
-    public delegate void OnTileClickedDelegate(Vector3Int pos);
+    public delegate void OnTileClickedDelegate(Tile tile);
     public event OnTileClickedDelegate OnTileClicked;
 
     private const int CHARACTER_LAYER = 6;
-
-
-
 
     private void Awake()
     {
@@ -33,12 +30,12 @@ public class InputController : MonoBehaviour
     public void Setup(LevelTiles levelTiles)
     {
         _levelTiles = levelTiles;
-        acceptInputs = true;
+        acceptPlayerInputs = true;
     }
 
     private void Update()
     {
-        if (!acceptInputs)
+        if (!acceptPlayerInputs)
             return;
 
         if (Input.GetMouseButtonDown(0))
@@ -59,8 +56,8 @@ public class InputController : MonoBehaviour
         if (clickedTile != null)
         {
             ConsoleLogger.Log("Tile clicked at: " + clickedTile.position);
-            ClickPosition = clickedTile.position;
-            OnTileClicked?.Invoke(clickedTile.position);
+            ClickedTile = clickedTile;
+            OnTileClicked?.Invoke(clickedTile);
         }
     }
 
@@ -78,5 +75,15 @@ public class InputController : MonoBehaviour
                 OnCharacterClicked?.Invoke(ClickedCharacter);
             }
         }
+    }
+
+    public void SimulateClick(Tile tile)
+    {
+        ClickedTile = tile;
+    }
+
+    public void SimulateClick(BaseCharacter character)
+    {
+        ClickedCharacter = character;
     }
 }
