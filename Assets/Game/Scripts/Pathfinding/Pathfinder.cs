@@ -6,12 +6,16 @@ public class Pathfinder
     private LevelTiles _levelTiles;
     private BasePathConfig _defaultConfig;
     private ITileDistance _defaultDistance;
+    private Vector3Int[] _offsets;
 
     public Pathfinder(LevelTiles levelTiles)
     {
         _levelTiles = levelTiles;
         _defaultConfig = new BasePathConfig();
         _defaultDistance = new ManhattanTileDistance();
+        _offsets = new Vector3Int[] {
+            TileNeighbors.Top, TileNeighbors.Right, TileNeighbors.Bottom, TileNeighbors.Left
+        };
     }
 
     public List<Tile> ReconstructPath(Tile startTile, Tile targetTile)
@@ -76,23 +80,28 @@ public class Pathfinder
         return new List<Tile>();
     }
 
-    public List<Tile> GetNeighbours(Tile tile, BasePathConfig config)
+    public List<Tile> GetNeighbours(Tile tile, BasePathConfig config, int depth = 1)
     {
-        var offsets = new Vector3Int[] {
-            TileNeighbors.Top, TileNeighbors.Right, TileNeighbors.Bottom, TileNeighbors.Left
-        };
-
         var neighbours = new List<Tile>();
 
-        foreach (var offset in offsets)
+        for (int depthMultiplier = 1; depthMultiplier <= depth; depthMultiplier++)
         {
-            var position = tile.position + offset;
+            AddNeighboursToList(neighbours, tile, config, depthMultiplier);
+        }
+
+        return neighbours;
+    }
+
+    private void AddNeighboursToList(List<Tile> neighbours, Tile tile, BasePathConfig config, int depthMultiplier)
+    {
+        for (int offsetIndex = 0; offsetIndex < _offsets.Length; offsetIndex++)
+        {
+            var position = tile.position + _offsets[offsetIndex] * depthMultiplier;
+
             if (_levelTiles.HasTile(position) && config.IsTileAvailable(_levelTiles.GetTile(position)))
             {
                 neighbours.Add(_levelTiles.GetTile(position));
             }
         }
-
-        return neighbours;
     }
 }

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -12,7 +11,10 @@ public class AIController : MonoBehaviour
     [SerializeField] private TeamController teamController;
 
     private ITileDistance _tileDistance;
-    private Pathfinder _pathfinder;
+
+    // AI actions
+    private AIAttack attackAction;
+    private AIMove movementAction;
 
     private void Awake()
     {
@@ -21,7 +23,8 @@ public class AIController : MonoBehaviour
 
     private void Start()
     {
-        _pathfinder = componentInit.pathfinder;
+        attackAction = new AIAttack(componentInit.CommandsDict[CharacterAction.Attack], componentInit.inputController);
+        movementAction = new AIMove(componentInit.CommandsDict[CharacterAction.Move], componentInit.pathfinder, componentInit.inputController);
     }
 
     public void InitAI(Team team)
@@ -39,52 +42,56 @@ public class AIController : MonoBehaviour
             {
                 ConsoleLogger.Log("AI: " + character.gameObject.name + " is taking a turn");
                 TakeTurn(character);
-                return;
+                EndTurn(character);
             }
         }
     }
 
     public void TakeTurn(BaseCharacter character)
     {
-        var characters = GetEnemyCharacters();
+        // Sort the characters by health
+        var characters = GetCharacters().OrderBy(c => c.characterVitals.health).ToList();
 
-        if (characters.Count == 0)
-        {
-            // No characters left, end turn?
-            EndTurn();
-        }
-
-        BasePathConfig movementConfig = new MovementPathConfig();
+        // if no characters left, end turn?
+        if (characters.Count == 0) return;
 
         foreach (var targetCharacter in characters)
         {
             ConsoleLogger.Log("AI: " + character.gameObject.name + " is checking " + targetCharacter.gameObject.name);
 
-            if (_tileDistance.GetDistance(character.tile, targetCharacter.tile) <= character.characterStats.attackRange)
+            // check if any character in range can be attacked
+            if (attackAction.TryPerformAction(character, targetCharacter))
             {
-                // attack character
                 ConsoleLogger.Log("AI: " + character.gameObject.name + " is attacking " + targetCharacter.gameObject.name);
-                AttackCharacter(character, targetCharacter);
                 return;
             }
-            else
+
+            // check if it is possible to move to any characters in racge and then attack
+            if (movementAction.TryPerformAction(character, targetCharacter, () => attackAction.TryPerformAction(character, targetCharacter)))
             {
-                ConsoleLogger.Log("AI: " + character.gameObject.name + " target " + targetCharacter.gameObject.name + " is too far (" + _tileDistance.GetDistance(character.tile, targetCharacter.tile) + " tiles away)");
+                ConsoleLogger.Log("AI: " + character.gameObject.name + " is moving towards and attacking " + targetCharacter.gameObject.name);
+                return;
             }
-
-            // try to move towards the character, and then attack
-            var characterMove = CalculateMoveToCharacter(character, targetCharacter, movementConfig);
-            if (!characterMove.canMove) continue;
-
-            ConsoleLogger.Log("AI: " + character.gameObject.name + " is moving " + targetCharacter.gameObject.name);
-            componentInit.inputController.SimulateClick(characterMove.tile);
-            componentInit.CommandsDict[CharacterAction.Move].ExecuteCommand(character, () => AttackCharacter(character, targetCharacter));
-
-            // TODO handle last case where no character can be attacked or moved to
         }
+
+        // no characters in range, try moving closer
+        ConsoleLogger.Log("AI: " + character.gameObject.name + " - no characters in range, try moving closer");
+        characters = GetCharacters().OrderBy(c => _tileDistance.GetDistance(character.tile, c.tile)).ToList(); // sort the characters by Manhattan distance
+
+        foreach (var targetCharacter in characters)
+        {
+            if (movementAction.TryPerformAction(character, targetCharacter, depth: 2)) // FIXME remove hardcoded depth value
+            {
+                ConsoleLogger.Log("AI: " + character.gameObject.name + " is moving closer to " + targetCharacter.gameObject.name);
+                return;
+            }
+        }
+
+        // Can't move closer to any character
+        ConsoleLogger.Log("AI: " + character.gameObject.name + " - no path available");
     }
 
-    public List<BaseCharacter> GetEnemyCharacters()
+    public List<BaseCharacter> GetCharacters()
     {
         var teams = teamController.GetTeams(TeamSide.Player);
         var characters = new List<BaseCharacter>();
@@ -97,47 +104,11 @@ public class AIController : MonoBehaviour
             }
         }
 
-        return characters.OrderBy(c => c.characterVitals.health).ToList();
+        return characters;
     }
 
-    private AICharacterMove CalculateMoveToCharacter(BaseCharacter character, BaseCharacter enemyCharacter, BasePathConfig pathConfig)
+    private void EndTurn(BaseCharacter character)
     {
-        var neighborTiles = _pathfinder.GetNeighbours(enemyCharacter.tile, pathConfig);
-        if (neighborTiles.Count == 0)
-        {
-            return new AICharacterMove();
-        }
-
-        var minDistance = character.characterStats.moveRange + 1;
-        var targetTile = neighborTiles[0];
-
-        foreach (var tile in neighborTiles)
-        {
-            var pathLength = _pathfinder.FindPath(character.tile, tile).Count;
-            if (pathLength != 0 && pathLength < minDistance)
-            {
-                minDistance = pathLength;
-                targetTile = tile;
-            }
-        }
-
-        if (targetTile != null && minDistance <= character.characterStats.moveRange)
-        {
-            // Can move
-            return new AICharacterMove(enemyCharacter, targetTile);
-        }
-
-        return new AICharacterMove();
-    }
-
-    private void AttackCharacter(BaseCharacter character, BaseCharacter targetCharacter)
-    {
-        componentInit.inputController.SimulateClick(targetCharacter);
-        componentInit.CommandsDict[CharacterAction.Attack].ExecuteCommand(character);
-    }
-
-    private void EndTurn()
-    {
-        throw new NotImplementedException();
+        character.EndTurn();
     }
 }
